@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block title %}Raporlar{% endblock %}
+{% block active_rapor %}active{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+    <p>Dashboard > Raporlar</p>
+    <h1>Finansal Raporlar</h1>
+    <p>Tüm finansal özetlerinizi tek ekrandan görüntüleyin.</p>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+
+        <div class="card-modern form-card">
+
+            <h4 class="fw-bold mb-4">
+                <i class="bi bi-bar-chart-fill text-primary"></i>
+                Genel İstatistikler
+            </h4>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-4">
+                    <h6>Toplam Gelir</h6>
+                    <h3 class="text-success">{{ gelir }} TL</h3>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <h6>Toplam Gider</h6>
+                    <h3 class="text-danger">{{ gider }} TL</h3>
+                </div>
+
+                <div class="col-md-6">
+                    <h6>Bakiye</h6>
+                    <h3 class="text-primary">{{ gelir-gider }} TL</h3>
+                </div>
+
+                <div class="col-md-6">
+                    <h6>Tasarruf Oranı</h6>
+
+                    {% if gelir > 0 %}
+                        <h3 class="text-warning">
+                            {{ ((gelir-gider)/gelir*100)|round(1) }} %
+                        </h3>
+                    {% else %}
+                        <h3 class="text-warning">0%</h3>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-5">
+
+        <div class="card-modern form-card">
+
+            <h4 class="fw-bold mb-4">
+                <i class="bi bi-download"></i>
+                Rapor İndir
+            </h4>
+
+            <div class="d-grid gap-3">
+
+                <a href="/pdf-indir" class="btn btn-danger">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    PDF Raporu
+                </a>
+
+                <a href="/excel-indir" class="btn btn-success">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    Excel Raporu
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card-modern form-card mt-4">
+
+    <h4 class="fw-bold mb-4">
+        <i class="bi bi-clock-history"></i>
+        Hazırlanacak Raporlar
+    </h4>
+
+    <div class="row">
+
+        <div class="col-md-3">
+            📊 Gelir Analizi
+        </div>
+
+        <div class="col-md-3">
+            💸 Gider Analizi
+        </div>
+
+        <div class="col-md-3">
+            📅 Aylık Özet
+        </div>
+
+        <div class="col-md-3">
+            📈 Grafik Raporu
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

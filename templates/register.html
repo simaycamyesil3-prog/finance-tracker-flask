@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}Kayıt Ol{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center align-items-center" style="min-height:75vh;">
+
+    <div class="col-lg-6">
+
+        <div class="card-modern form-card">
+
+            <div class="text-center mb-4">
+
+                <div class="stat-icon bg-purple-soft mx-auto mb-3">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+
+                <h2 class="fw-bold">Yeni Hesap Oluştur</h2>
+
+                <p class="text-muted">
+                    Finans Takip Sistemine ücretsiz katılın.
+                </p>
+
+            </div>
+
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label class="form-label">Ad Soyad</label>
+                    <input type="text"
+                           name="ad_soyad"
+                           class="form-control"
+                           placeholder="Ad Soyad"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Kullanıcı Adı</label>
+                    <input type="text"
+                           name="kullanici_adi"
+                           class="form-control"
+                           placeholder="Kullanıcı Adı"
+                           required>
+                </div>
+
+                <div class="mb-3">
+    <label class="form-label">Email</label>
+    <input type="email" name="email" class="form-control" placeholder="Email adresiniz" required>
+</div>
+
+                <div class="mb-3">
+                    <label class="form-label">Şifre</label>
+                    <input type="password"
+                           name="sifre"
+                           class="form-control"
+                           placeholder="Şifre"
+                           required>
+                </div>
+
+                <button class="btn-gradient w-100 mt-3">
+                    <i class="bi bi-person-check-fill"></i>
+                    Hesap Oluştur
+                </button>
+
+            </form>
+
+            <hr>
+
+            <div class="text-center">
+
+                <span class="text-muted">
+                    Zaten hesabın var mı?
+                </span>
+
+                <br><br>
+
+                <a href="/login"
+                   class="btn btn-outline-primary px-4">
+                    Giriş Yap
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

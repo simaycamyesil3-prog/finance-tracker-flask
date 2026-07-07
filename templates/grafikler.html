@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block title %}Grafikler{% endblock %}
+{% block active_grafik %}active{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+    <p>Dashboard > Grafikler</p>
+    <h1>Finans Grafikleri</h1>
+    <p>Gelir, gider ve bakiye durumunu grafiklerle analiz et.</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-green-soft">
+                <i class="bi bi-arrow-up-right"></i>
+            </div>
+            <div>
+                <p>Toplam Gelir</p>
+                <h3 class="text-success">{{ gelir }} TL</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-red-soft">
+                <i class="bi bi-cart-dash"></i>
+            </div>
+            <div>
+                <p>Toplam Gider</p>
+                <h3 class="text-danger">{{ gider }} TL</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue-soft">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <div>
+                <p>Bakiye</p>
+                <h3 class="text-primary">{{ gelir - gider }} TL</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-modern form-card">
+            <h4 class="fw-bold mb-4">Gelir - Gider Karşılaştırması</h4>
+            <canvas id="gelirGiderGrafik" height="130"></canvas>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card-modern form-card">
+            <h4 class="fw-bold mb-4">Dağılım</h4>
+            <canvas id="dagilimGrafik"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const gelir = {{ gelir }};
+const gider = {{ gider }};
+
+new Chart(document.getElementById("gelirGiderGrafik"), {
+    type: "bar",
+    data: {
+        labels: ["Gelir", "Gider"],
+        datasets: [{
+            label: "Tutar (TL)",
+            data: [gelir, gider],
+            backgroundColor: ["#22c55e", "#ef4444"],
+            borderRadius: 14
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+new Chart(document.getElementById("dagilimGrafik"), {
+    type: "doughnut",
+    data: {
+        labels: ["Gelir", "Gider"],
+        datasets: [{
+            data: [gelir, gider],
+            backgroundColor: ["#22c55e", "#ef4444"],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: "65%"
+    }
+});
+</script>
+{% endblock %}

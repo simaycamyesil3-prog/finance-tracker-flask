@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+
+*.db
+
+*.csv
+
+*.pdf
+*.xlsx
+
+.env
+
+.vscode/

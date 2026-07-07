@@ -1,0 +1,312 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block active_dashboard %}active{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+    <h1>Merhaba, {{ ad_soyad }} 👋</h1>
+    <p>Finansal durumunu buradan kolayca takip edebilirsin.</p>
+</div>
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-green-soft">
+                <i class="bi bi-arrow-up-right"></i>
+            </div>
+            <div>
+                <p>Toplam Gelir</p>
+                <h3 class="text-success">₺{{ gelir }}</h3>
+                <small class="text-success">↗ Gelir durumu</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-red-soft">
+                <i class="bi bi-cart"></i>
+            </div>
+            <div>
+                <p>Toplam Gider</p>
+                <h3 class="text-danger">₺{{ gider }}</h3>
+                <small class="text-danger">↗ Gider durumu</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-purple-soft">
+                <i class="bi bi-wallet2"></i>
+            </div>
+            <div>
+                <p>Bakiye</p>
+                <h3 style="color:#7c3aed;">₺{{ bakiye }}</h3>
+                <small style="color:#7c3aed;">↗ Güncel bakiye</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-orange-soft">
+                <i class="bi bi-pie-chart-fill"></i>
+            </div>
+            <div>
+                <p>Tasarruf Oranı</p>
+                {% if gelir > 0 %}
+                    <h3 style="color:#f97316;">%{{ ((bakiye / gelir) * 100)|round(1) }}</h3>
+                {% else %}
+                    <h3 style="color:#f97316;">%0</h3>
+                {% endif %}
+                <small style="color:#f97316;">↗ Finans oranı</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-7">
+        <div class="card-modern form-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Aylık Gelir - Gider Grafiği</h4>
+                <span class="badge bg-light text-dark p-2">6 Ay</span>
+            </div>
+            <canvas id="aylikGrafik" height="145"></canvas>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-modern form-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Son İşlemler</h4>
+                <a href="/raporlar" class="text-decoration-none fw-bold" style="color:#7c3aed;">Tümünü Gör</a>
+            </div>
+
+            {% for islem in son_islemler %}
+            <div class="transaction-item">
+
+                {% if islem[0] == "Gelir" %}
+                    <div class="transaction-icon income">
+                        <i class="bi bi-cash"></i>
+                    </div>
+                {% else %}
+                    <div class="transaction-icon expense">
+                        <i class="bi bi-cart"></i>
+                    </div>
+                {% endif %}
+
+                <div>
+                    <strong>{{ islem[3] }}</strong>
+                    <small>{{ islem[0] }} · {{ islem[2] }}</small>
+                </div>
+
+                {% if islem[0] == "Gelir" %}
+                    <span class="text-success fw-bold ms-auto">+ ₺{{ islem[1] }}</span>
+                {% else %}
+                    <span class="text-danger fw-bold ms-auto">- ₺{{ islem[1] }}</span>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-4">
+        <div class="card-modern form-card">
+            <h4 class="fw-bold mb-4">Harcamalarım</h4>
+            <canvas id="kategoriGrafik"></canvas>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-modern form-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Aylık Karşılaştırma</h4>
+                <span class="badge bg-light text-dark p-2">6 Ay</span>
+            </div>
+            <canvas id="barGrafik" height="170"></canvas>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card-modern form-card summary-box">
+            <h4 class="fw-bold mb-4">Finansal Özet</h4>
+
+            <div class="summary-row">
+                <span>Toplam Gelir</span>
+                <strong class="text-success">₺{{ gelir }}</strong>
+            </div>
+
+            <div class="summary-row">
+                <span>Toplam Gider</span>
+                <strong class="text-danger">₺{{ gider }}</strong>
+            </div>
+
+            <div class="summary-row">
+                <span>Bakiye</span>
+                <strong style="color:#7c3aed;">₺{{ bakiye }}</strong>
+            </div>
+
+            <div class="summary-row">
+                <span>Tasarruf</span>
+                {% if gelir > 0 %}
+                    <strong style="color:#f97316;">%{{ ((bakiye / gelir) * 100)|round(1) }}</strong>
+                {% else %}
+                    <strong style="color:#f97316;">%0</strong>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const gelir = {{ gelir }};
+const gider = {{ gider }};
+
+new Chart(document.getElementById("aylikGrafik"), {
+    type: "line",
+    data: {
+        labels: ["Oca", "Şub", "Mar", "Nis", "May", "Haz"],
+        datasets: [
+            {
+                label: "Gelir",
+                data: [gelir * 0.50, gelir * 0.72, gelir * 0.61, gelir * 0.84, gelir * 0.68, gelir],
+                borderColor: "#22c55e",
+                backgroundColor: "rgba(34,197,94,0.12)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5
+            },
+            {
+                label: "Gider",
+                data: [gider * 0.55, gider * 0.76, gider * 0.58, gider * 0.92, gider * 0.70, gider],
+                borderColor: "#f43f5e",
+                backgroundColor: "rgba(244,63,94,0.12)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        animation: {
+            duration: 1200,
+            easing: "easeOutQuart"
+        },
+        plugins: {
+            legend: {
+                position: "top"
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+const kategoriLabels = {{ kategori_verileri | map(attribute=0) | list | tojson }};
+const kategoriData = {{ kategori_verileri | map(attribute=1) | list | tojson }};
+
+new Chart(document.getElementById("kategoriGrafik"), {
+    type: "doughnut",
+    data: {
+        labels: kategoriLabels,
+        datasets: [{
+            data: kategoriData,
+            backgroundColor: ["#3b82f6", "#22c55e", "#f97316", "#8b5cf6", "#94a3b8", "#ef4444", "#14b8a6"],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: "65%",
+        animation: {
+            duration: 1200,
+            easing: "easeOutQuart"
+        },
+        plugins: {
+            legend: {
+                position: "right"
+            }
+        }
+    }
+});
+            backgroundColor: ["#3b82f6", "#22c55e", "#f97316", "#8b5cf6", "#94a3b8"],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: "65%",
+        animation: {
+            duration: 1200,
+            easing: "easeOutQuart"
+        },
+        plugins: {
+            legend: {
+                position: "right"
+            }
+        }
+    }
+});
+
+new Chart(document.getElementById("barGrafik"), {
+    type: "bar",
+    data: {
+        labels: ["Oca", "Şub", "Mar", "Nis", "May", "Haz"],
+        datasets: [
+            {
+                label: "Gelir",
+                data: [gelir * 0.50, gelir * 0.72, gelir * 0.61, gelir * 0.84, gelir * 0.68, gelir],
+                backgroundColor: "#22c55e",
+                borderRadius: 10
+            },
+            {
+                label: "Gider",
+                data: [gider * 0.55, gider * 0.76, gider * 0.58, gider * 0.92, gider * 0.70, gider],
+                backgroundColor: "#f43f5e",
+                borderRadius: 10
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        animation: {
+            duration: 1200,
+            easing: "easeOutQuart"
+        },
+        plugins: {
+            legend: {
+                position: "top"
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

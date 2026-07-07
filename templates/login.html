@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block title %}Giriş Yap{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card-modern form-card">
+            <div class="text-center mb-4">
+                <div class="stat-icon bg-purple-soft mx-auto mb-3">
+                    <i class="bi bi-person-lock"></i>
+                </div>
+                <h2 class="fw-bold">Giriş Yap</h2>
+                <p class="text-muted">Finans paneline erişmek için giriş yap.</p>
+            </div>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Kullanıcı Adı</label>
+                    <input type="text" name="kullanici_adi" class="form-control" placeholder="Kullanıcı adınızı girin" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Şifre</label>
+                    <input type="password" name="sifre" class="form-control" placeholder="Şifrenizi girin" required>
+                </div>
+
+                <button class="btn-gradient w-100 mb-3">
+                    <i class="bi bi-box-arrow-in-right"></i> Giriş Yap
+                </button>
+            </form>
+
+            <div class="text-center">
+                <span class="text-muted">Hesabın yok mu?</span>
+                <a href="/register" class="fw-bold text-decoration-none">Kayıt Ol</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

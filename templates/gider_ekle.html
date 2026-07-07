@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block title %}Gider Ekle{% endblock %}
+{% block active_gider %}active{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+    <p>Dashboard > Giderler > Gider Ekle</p>
+    <h1>Gider Ekle</h1>
+    <p>Yeni bir gider kaydı oluşturun.</p>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-7">
+        <div class="card-modern form-card">
+            <h4 class="fw-bold mb-4">
+                <i class="bi bi-cart-dash text-danger"></i>
+                Gider Bilgileri
+            </h4>
+
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label class="form-label">Tutar</label>
+                    <input type="number" step="0.01" name="tutar" class="form-control" placeholder="Tutarı giriniz..." required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Kategori</label>
+                    <input type="text" name="kategori" class="form-control" placeholder="Örn: Market, Fatura, Ulaşım" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Açıklama</label>
+                    <input type="text" name="aciklama" class="form-control" placeholder="Açıklama ekleyebilirsiniz..." required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Tarih</label>
+                    <input type="date" name="tarih" class="form-control" required>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <a href="/dashboard" class="btn btn-light w-50">Temizle</a>
+                    <button class="btn btn-danger w-50" style="border-radius:14px; padding:13px; font-weight:800;">
+                        <i class="bi bi-save"></i> Kaydet
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+
+        <div class="card-modern form-card mb-4">
+            <div class="stat-icon bg-red-soft mb-3">
+                <i class="bi bi-lightbulb"></i>
+            </div>
+
+            <h4 class="fw-bold">Gider Takip İpuçları</h4>
+            <p class="text-muted mb-0">
+                Giderlerinizi düzenli kaydetmek, en çok harcama yaptığınız alanları görmenizi sağlar.
+            </p>
+        </div>
+
+        <div class="card-modern form-card">
+            <h4 class="fw-bold mb-4">
+                <i class="bi bi-clock text-danger"></i>
+                Son Eklenen Giderler
+            </h4>
+
+            <p class="text-muted mb-0">
+                Bu alanı birazdan son gider kayıtlarıyla dolduracağız.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

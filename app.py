@@ -30,9 +30,9 @@ def login():
         imlec.execute("""
             SELECT id, ad_soyad
             FROM kullanicilar
-            WHERE kullanici_adi = ? AND (sifre = ? OR sifre = ?)
-        """, (kullanici_adi, sifreli, sifre))
-
+            WHERE (kullanici_adi = ? OR email = ?) AND (sifre = ? OR sifre = ?)
+        """, (kullanici_adi, kullanici_adi, sifreli, sifre))
+        
         kullanici = imlec.fetchone()
         baglanti.close()
 

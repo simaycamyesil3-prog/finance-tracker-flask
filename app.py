@@ -1,11 +1,13 @@
 from flask import Flask, render_template
-from database import veritabani_baglan
+from database import veritabani_baglan, tablolari_olustur
 from flask import Flask, render_template, request, redirect, session, send_file, flash
 from datetime import datetime
 
 app = Flask(__name__)
 
 app.secret_key = "finans_takip_gizli_anahtar"
+
+tablolari_olustur()
 
 
 @app.route("/")

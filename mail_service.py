@@ -15,7 +15,7 @@ def mail_ayarlari(app):
     app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
-    app.config["MAIL_TIMEOUT"] = 10
+    app.config["MAIL_TIMEOUT"] = 5
 
     mail.init_app(app)
 

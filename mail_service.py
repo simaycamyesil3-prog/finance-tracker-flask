@@ -1,5 +1,6 @@
 import os
 import random
+import smtplib
 
 from flask_mail import Mail, Message
 
@@ -14,6 +15,7 @@ def mail_ayarlari(app):
     app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
     app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
+    app.config["MAIL_TIMEOUT"] = 10
 
     mail.init_app(app)
 
@@ -23,14 +25,24 @@ def kod_uret():
 
 
 def mail_gonder(alici, konu, icerik):
-    if not os.environ.get("MAIL_USERNAME") or not os.environ.get("MAIL_PASSWORD"):
+    try:
+        if not os.environ.get("MAIL_USERNAME") or not os.environ.get("MAIL_PASSWORD"):
+            print("MAIL_USERNAME veya MAIL_PASSWORD eksik.")
+            return False
+
+        mesaj = Message(
+            subject=konu,
+            recipients=[alici],
+            body=icerik
+        )
+
+        mail.send(mesaj)
+        return True
+
+    except smtplib.SMTPAuthenticationError as e:
+        print("SMTP kimlik doğrulama hatası:", e)
         return False
 
-    mesaj = Message(
-        subject=konu,
-        recipients=[alici],
-        body=icerik
-    )
-
-    mail.send(mesaj)
-    return True
+    except Exception as e:
+        print("Mail gönderme hatası:", e)
+        return False

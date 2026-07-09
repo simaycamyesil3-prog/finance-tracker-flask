@@ -1,21 +1,22 @@
-import os
-import random
-import re
 import time
+import re
+
+from flask import Flask, render_template, request, redirect, session, send_file
+from database import veritabani_baglan, tablolari_olustur
 from datetime import datetime
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, session, send_file
-from flask_mail import Mail, Message
-
-from database import veritabani_baglan, tablolari_olustur
-from auth import sifre_hashle
 from pdf_rapor import pdf_rapor_olustur
 from excel_rapor import excel_rapor_olustur
-
+from auth import sifre_hashle
+from mail_service import mail_ayarlari, kod_uret, mail_gonder
 
 app = Flask(__name__)
 app.secret_key = "finans_takip_gizli_anahtar"
+
+mail_ayarlari(app)
+
+tablolari_olustur()
 
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
@@ -113,7 +114,7 @@ def register():
         email = request.form["email"]
         sifre = request.form["sifre"]
 
-        if not sifre_guclu_mu(sifre):
+        if len(sifre) < 8 or not re.search(r"[A-Z]", sifre) or not re.search(r"[a-z]", sifre) or not re.search(r"[0-9]", sifre):
             return "Şifre en az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir."
 
         baglanti = veritabani_baglan()
@@ -141,18 +142,17 @@ def register():
             "zaman": time.time()
         }
 
-        mail_durumu = mail_gonder(
+        mail_gonder(
             email,
             "Finans Takip - E-posta Doğrulama Kodu",
             f"Merhaba {ad_soyad},\n\nDoğrulama kodunuz: {kod}\n\nBu kod 10 dakika geçerlidir."
         )
 
-        if not mail_durumu:
-            return "Mail gönderilemedi. Render MAIL_USERNAME ve MAIL_PASSWORD ayarlarını kontrol et."
-
         return redirect("/kod-dogrula")
 
     return render_template("register.html")
+
+
 
 
 @app.route("/kod-dogrula", methods=["GET", "POST"])

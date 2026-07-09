@@ -22,45 +22,68 @@
                     Finans Takip Sistemine ücretsiz katılın.
                 </p>
 
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-envelope-check-fill"></i>
+                    Hesabı oluşturduktan sonra e-posta adresinize doğrulama kodu gönderilecektir.
+                </div>
+
             </div>
 
             <form method="POST">
 
                 <div class="mb-3">
                     <label class="form-label">Ad Soyad</label>
-                    <input type="text"
-                           name="ad_soyad"
-                           class="form-control"
-                           placeholder="Ad Soyad"
-                           required>
+                    <input
+                        type="text"
+                        name="ad_soyad"
+                        class="form-control"
+                        placeholder="Ad Soyad"
+                        required>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Kullanıcı Adı</label>
-                    <input type="text"
-                           name="kullanici_adi"
-                           class="form-control"
-                           placeholder="Kullanıcı Adı"
-                           required>
+                    <input
+                        type="text"
+                        name="kullanici_adi"
+                        class="form-control"
+                        placeholder="Kullanıcı Adı"
+                        required>
                 </div>
 
                 <div class="mb-3">
-    <label class="form-label">Email</label>
-    <input type="email" name="email" class="form-control" placeholder="Email adresiniz" required>
-</div>
+                    <label class="form-label">E-posta</label>
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-control"
+                        placeholder="ornek@gmail.com"
+                        required>
+                </div>
 
-                <div class="mb-3">
+                <div class="mb-2">
                     <label class="form-label">Şifre</label>
-                    <input type="password"
-                           name="sifre"
-                           class="form-control"
-                           placeholder="Şifre"
-                           required>
+                    <input
+                        type="password"
+                        name="sifre"
+                        class="form-control"
+                        placeholder="Şifrenizi oluşturun"
+                        required>
+                </div>
+
+                <div class="form-text mb-3">
+                    Şifreniz en az
+                    <strong>8 karakter</strong>,
+                    <strong>1 büyük harf</strong>,
+                    <strong>1 küçük harf</strong>
+                    ve
+                    <strong>1 rakam</strong>
+                    içermelidir.
                 </div>
 
                 <button class="btn-gradient w-100 mt-3">
-                    <i class="bi bi-person-check-fill"></i>
-                    Hesap Oluştur
+                    <i class="bi bi-envelope-check-fill"></i>
+                    Doğrulama Kodu Gönder
                 </button>
 
             </form>

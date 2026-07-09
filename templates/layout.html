@@ -54,7 +54,7 @@
                 <i class="bi bi-file-earmark-excel"></i> Excel İndir
             </a>
 
-            <a href="/">
+            <a href="/logout">
                 <i class="bi bi-box-arrow-right"></i> Çıkış Yap
             </a>
         </nav>
@@ -70,8 +70,9 @@
 
     {% endif %}
 
-    <main class="main-content">
+    <main class="main-content {% if not session.get('kullanici_id') %}auth-main{% endif %}">
 
+        {% if session.get("kullanici_id") %}
         <header class="topbar">
             <div class="menu-btn">
                 <i class="bi bi-list"></i>
@@ -88,49 +89,53 @@
                 </button>
 
                 <div class="notification" id="notificationBtn">
-    <i class="bi bi-bell"></i>
-    <span>3</span>
+                    <i class="bi bi-bell"></i>
+                    <span>3</span>
 
-    <div class="dropdown-box" id="notificationMenu">
-        <h6>Bildirimler</h6>
-        <p>Yeni gelir/gider işlemlerin burada görünecek.</p>
-        <p>PDF ve Excel raporların hazır.</p>
-    </div>
-</div>
+                    <div class="dropdown-box" id="notificationMenu">
+                        <h6>Bildirimler</h6>
+                        <p>Yeni gelir/gider işlemlerin burada görünecek.</p>
+                        <p>PDF ve Excel raporların hazır.</p>
+                    </div>
+                </div>
 
-<div class="user-box" id="profileBtn">
-    <div class="avatar">
-        <i class="bi bi-person"></i>
-    </div>
-    <div>
-        <strong>{{ ad_soyad }}</strong>
-        <small>Hoş geldin!</small>
-    </div>
+                <div class="user-box" id="profileBtn">
+                    <div class="avatar">
+                        <i class="bi bi-person"></i>
+                    </div>
 
-    <div class="dropdown-box profile-menu" id="profileMenu">
-        <a href="/profil"><i class="bi bi-person"></i> Profilim</a>
-        <a href="/ayarlar"><i class="bi bi-gear"></i> Ayarlar</a>
-        <a href="/"><i class="bi bi-box-arrow-right"></i> Çıkış Yap</a>
-    </div>
-</div>
+                    <div>
+                        <strong>{{ ad_soyad }}</strong>
+                        <small>Hoş geldin!</small>
+                    </div>
+
+                    <div class="dropdown-box profile-menu" id="profileMenu">
+                        <a href="/profil"><i class="bi bi-person"></i> Profilim</a>
+                        <a href="/ayarlar"><i class="bi bi-gear"></i> Ayarlar</a>
+                        <a href="/logout"><i class="bi bi-box-arrow-right"></i> Çıkış Yap</a>
+                    </div>
+                </div>
             </div>
         </header>
+        {% endif %}
 
         <section class="page-content">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-             <div class="alert alert-{{ category }} custom-alert alert-dismissible fade show"
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} custom-alert alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-    {% block content %}{% endblock %}
-</section>
+            {% block content %}{% endblock %}
+
+        </section>
+
     </main>
 
 </div>
@@ -153,28 +158,31 @@
             }
         });
     }
-</script>
-<script>
+
     const notificationBtn = document.getElementById("notificationBtn");
     const notificationMenu = document.getElementById("notificationMenu");
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
 
-    notificationBtn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        notificationMenu.classList.toggle("show");
-        profileMenu.classList.remove("show");
-    });
+    if (notificationBtn && notificationMenu && profileMenu) {
+        notificationBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            notificationMenu.classList.toggle("show");
+            profileMenu.classList.remove("show");
+        });
+    }
 
-    profileBtn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        profileMenu.classList.toggle("show");
-        notificationMenu.classList.remove("show");
-    });
+    if (profileBtn && profileMenu && notificationMenu) {
+        profileBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            profileMenu.classList.toggle("show");
+            notificationMenu.classList.remove("show");
+        });
+    }
 
     document.addEventListener("click", function () {
-        notificationMenu.classList.remove("show");
-        profileMenu.classList.remove("show");
+        if (notificationMenu) notificationMenu.classList.remove("show");
+        if (profileMenu) profileMenu.classList.remove("show");
     });
 </script>
 

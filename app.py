@@ -1,15 +1,30 @@
-from flask import Flask, render_template, request, redirect, session, send_file
-from database import veritabani_baglan, tablolari_olustur
+import os
+import random
+import re
+import time
 from datetime import datetime
 from functools import wraps
 
+from flask import Flask, render_template, request, redirect, session, send_file
+from flask_mail import Mail, Message
+
+from database import veritabani_baglan, tablolari_olustur
+from auth import sifre_hashle
 from pdf_rapor import pdf_rapor_olustur
 from excel_rapor import excel_rapor_olustur
-from auth import sifre_hashle
 
 
 app = Flask(__name__)
 app.secret_key = "finans_takip_gizli_anahtar"
+
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
+
+mail = Mail(app)
 
 tablolari_olustur()
 
@@ -21,6 +36,32 @@ def login_required(f):
             return redirect("/login")
         return f(*args, **kwargs)
     return decorated_function
+
+
+def kod_uret():
+    return str(random.randint(100000, 999999))
+
+
+def mail_gonder(alici, konu, icerik):
+    if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
+        return False
+
+    mesaj = Message(konu, recipients=[alici])
+    mesaj.body = icerik
+    mail.send(mesaj)
+    return True
+
+
+def sifre_guclu_mu(sifre):
+    if len(sifre) < 8:
+        return False
+    if not re.search(r"[A-Z]", sifre):
+        return False
+    if not re.search(r"[a-z]", sifre):
+        return False
+    if not re.search(r"[0-9]", sifre):
+        return False
+    return True
 
 
 @app.route("/")
@@ -71,7 +112,66 @@ def register():
         kullanici_adi = request.form["kullanici_adi"]
         email = request.form["email"]
         sifre = request.form["sifre"]
-        sifreli = sifre_hashle(sifre)
+
+        if not sifre_guclu_mu(sifre):
+            return "Şifre en az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir."
+
+        baglanti = veritabani_baglan()
+        imlec = baglanti.cursor()
+
+        imlec.execute("""
+            SELECT id FROM kullanicilar
+            WHERE kullanici_adi = ? OR email = ?
+        """, (kullanici_adi, email))
+
+        mevcut = imlec.fetchone()
+        baglanti.close()
+
+        if mevcut:
+            return "Bu kullanıcı adı veya e-posta zaten kayıtlı."
+
+        kod = kod_uret()
+
+        session["kayit_bilgileri"] = {
+            "ad_soyad": ad_soyad,
+            "kullanici_adi": kullanici_adi,
+            "email": email,
+            "sifre": sifre_hashle(sifre),
+            "kod": kod,
+            "zaman": time.time()
+        }
+
+        mail_durumu = mail_gonder(
+            email,
+            "Finans Takip - E-posta Doğrulama Kodu",
+            f"Merhaba {ad_soyad},\n\nDoğrulama kodunuz: {kod}\n\nBu kod 10 dakika geçerlidir."
+        )
+
+        if not mail_durumu:
+            return "Mail gönderilemedi. Render MAIL_USERNAME ve MAIL_PASSWORD ayarlarını kontrol et."
+
+        return redirect("/kod-dogrula")
+
+    return render_template("register.html")
+
+
+@app.route("/kod-dogrula", methods=["GET", "POST"])
+def kod_dogrula():
+    if "kayit_bilgileri" not in session:
+        return redirect("/register")
+
+    bilgiler = session["kayit_bilgileri"]
+
+    if time.time() - bilgiler["zaman"] > 600:
+        session.pop("kayit_bilgileri", None)
+        return "Kodun süresi doldu. Lütfen tekrar kayıt olun."
+
+    if request.method == "POST":
+        girilen_kod = request.form["kod"]
+
+        if girilen_kod != bilgiler["kod"]:
+            return "Doğrulama kodu yanlış."
+
         tarih = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         baglanti = veritabani_baglan()
@@ -82,9 +182,16 @@ def register():
                 INSERT INTO kullanicilar
                 (ad_soyad, kullanici_adi, email, sifre, olusturma_tarihi)
                 VALUES (?, ?, ?, ?, ?)
-            """, (ad_soyad, kullanici_adi, email, sifreli, tarih))
+            """, (
+                bilgiler["ad_soyad"],
+                bilgiler["kullanici_adi"],
+                bilgiler["email"],
+                bilgiler["sifre"],
+                tarih
+            ))
 
             baglanti.commit()
+            session.pop("kayit_bilgileri", None)
             return redirect("/login")
 
         except Exception as e:
@@ -93,7 +200,105 @@ def register():
         finally:
             baglanti.close()
 
-    return render_template("register.html")
+    return render_template("kod_dogrula.html")
+
+
+@app.route("/sifremi-unuttum", methods=["GET", "POST"])
+def sifremi_unuttum():
+    if request.method == "POST":
+        email = request.form["email"]
+
+        baglanti = veritabani_baglan()
+        imlec = baglanti.cursor()
+
+        imlec.execute("SELECT id, ad_soyad FROM kullanicilar WHERE email = ?", (email,))
+        kullanici = imlec.fetchone()
+        baglanti.close()
+
+        if not kullanici:
+            return "Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı."
+
+        kod = kod_uret()
+
+        session["sifre_sifirlama"] = {
+            "email": email,
+            "kod": kod,
+            "zaman": time.time()
+        }
+
+        mail_durumu = mail_gonder(
+            email,
+            "Finans Takip - Şifre Sıfırlama Kodu",
+            f"Merhaba {kullanici[1]},\n\nŞifre sıfırlama kodunuz: {kod}\n\nBu kod 10 dakika geçerlidir."
+        )
+
+        if not mail_durumu:
+            return "Mail gönderilemedi. Render MAIL_USERNAME ve MAIL_PASSWORD ayarlarını kontrol et."
+
+        return redirect("/sifre-kod-dogrula")
+
+    return render_template("sifremi_unuttum.html")
+
+
+@app.route("/sifre-kod-dogrula", methods=["GET", "POST"])
+def sifre_kod_dogrula():
+    if "sifre_sifirlama" not in session:
+        return redirect("/sifremi-unuttum")
+
+    bilgiler = session["sifre_sifirlama"]
+
+    if time.time() - bilgiler["zaman"] > 600:
+        session.pop("sifre_sifirlama", None)
+        return "Kodun süresi doldu. Lütfen tekrar deneyin."
+
+    if request.method == "POST":
+        girilen_kod = request.form["kod"]
+
+        if girilen_kod != bilgiler["kod"]:
+            return "Kod yanlış."
+
+        session["sifre_kodu_onaylandi"] = True
+        return redirect("/sifre-sifirla")
+
+    return render_template("kod_dogrula.html")
+
+
+@app.route("/sifre-sifirla", methods=["GET", "POST"])
+def sifre_sifirla():
+    if "sifre_sifirlama" not in session or not session.get("sifre_kodu_onaylandi"):
+        return redirect("/sifremi-unuttum")
+
+    if request.method == "POST":
+        yeni_sifre = request.form["yeni_sifre"]
+        yeni_sifre_tekrar = request.form["yeni_sifre_tekrar"]
+
+        if yeni_sifre != yeni_sifre_tekrar:
+            return "Şifreler eşleşmiyor."
+
+        if not sifre_guclu_mu(yeni_sifre):
+            return "Şifre en az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir."
+
+        sifreli = sifre_hashle(yeni_sifre)
+        email = session["sifre_sifirlama"]["email"]
+
+        baglanti = veritabani_baglan()
+        imlec = baglanti.cursor()
+
+        imlec.execute("""
+            UPDATE kullanicilar
+            SET sifre = ?
+            WHERE email = ?
+        """, (sifreli, email))
+
+        baglanti.commit()
+        baglanti.close()
+
+        session.pop("sifre_sifirlama", None)
+        session.pop("sifre_kodu_onaylandi", None)
+
+        return redirect("/login")
+
+    return render_template("sifre_sifirla.html")
 
 
 @app.route("/logout")

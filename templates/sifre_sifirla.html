@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}Yeni Şifre Oluştur{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center align-items-center" style="min-height:75vh;">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card-modern form-card">
+
+            <div class="text-center mb-4">
+
+                <div class="stat-icon bg-purple-soft mx-auto mb-3">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+
+                <h2 class="fw-bold">Yeni Şifre Oluştur</h2>
+
+                <p class="text-muted">
+                    Lütfen güçlü bir şifre belirleyin.
+                </p>
+
+            </div>
+
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label class="form-label">Yeni Şifre</label>
+
+                    <input
+                        type="password"
+                        name="yeni_sifre"
+                        class="form-control"
+                        placeholder="Yeni şifrenizi girin"
+                        required>
+
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Yeni Şifre (Tekrar)</label>
+
+                    <input
+                        type="password"
+                        name="yeni_sifre_tekrar"
+                        class="form-control"
+                        placeholder="Yeni şifrenizi tekrar girin"
+                        required>
+
+                </div>
+
+                <div class="alert alert-info">
+
+                    <strong>Şifre Kuralları</strong>
+
+                    <ul class="mb-0 mt-2">
+                        <li>En az 8 karakter</li>
+                        <li>En az 1 büyük harf</li>
+                        <li>En az 1 küçük harf</li>
+                        <li>En az 1 rakam</li>
+                    </ul>
+
+                </div>
+
+                <button class="btn-gradient w-100">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Şifreyi Güncelle
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

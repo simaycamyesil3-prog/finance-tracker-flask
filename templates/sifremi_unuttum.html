@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+{% block title %}Şifremi Unuttum{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center align-items-center" style="min-height:75vh;">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card-modern form-card">
+
+            <div class="text-center mb-4">
+                <div class="stat-icon bg-purple-soft mx-auto mb-3">
+                    <i class="bi bi-envelope-lock"></i>
+                </div>
+
+                <h2 class="fw-bold">Şifremi Unuttum</h2>
+
+                <p class="text-muted">
+                    Kayıtlı e-posta adresinizi girin.<br>
+                    Size doğrulama kodu göndereceğiz.
+                </p>
+
+            </div>
+
+            <form method="POST">
+
+                <div class="mb-4">
+                    <label class="form-label">E-posta Adresi</label>
+
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-control"
+                        placeholder="ornek@gmail.com"
+                        required>
+
+                </div>
+
+                <button class="btn-gradient w-100">
+                    <i class="bi bi-envelope-fill"></i>
+                    Doğrulama Kodu Gönder
+                </button>
+
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="/login" class="text-decoration-none fw-bold">
+                    Giriş Yap
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,4 +1,3 @@
-import os
 import time
 import re
 
@@ -12,22 +11,11 @@ from excel_rapor import excel_rapor_olustur
 from auth import sifre_hashle
 from mail_service import mail_ayarlari, kod_uret, mail_gonder
 
+
 app = Flask(__name__)
 app.secret_key = "finans_takip_gizli_anahtar"
 
 mail_ayarlari(app)
-
-tablolari_olustur()
-
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
-
-mail = Mail(app)
-
 tablolari_olustur()
 
 
@@ -38,20 +26,6 @@ def login_required(f):
             return redirect("/login")
         return f(*args, **kwargs)
     return decorated_function
-
-
-def kod_uret():
-    return str(random.randint(100000, 999999))
-
-
-def mail_gonder(alici, konu, icerik):
-    if not app.config["MAIL_USERNAME"] or not app.config["MAIL_PASSWORD"]:
-        return False
-
-    mesaj = Message(konu, recipients=[alici])
-    mesaj.body = icerik
-    mail.send(mesaj)
-    return True
 
 
 def sifre_guclu_mu(sifre):
@@ -115,7 +89,7 @@ def register():
         email = request.form["email"]
         sifre = request.form["sifre"]
 
-        if len(sifre) < 8 or not re.search(r"[A-Z]", sifre) or not re.search(r"[a-z]", sifre) or not re.search(r"[0-9]", sifre):
+        if not sifre_guclu_mu(sifre):
             return "Şifre en az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir."
 
         baglanti = veritabani_baglan()
@@ -143,17 +117,18 @@ def register():
             "zaman": time.time()
         }
 
-        mail_gonder(
+        mail_durumu = mail_gonder(
             email,
             "Finans Takip - E-posta Doğrulama Kodu",
             f"Merhaba {ad_soyad},\n\nDoğrulama kodunuz: {kod}\n\nBu kod 10 dakika geçerlidir."
         )
 
+        if not mail_durumu:
+            return "Mail gönderilemedi. Render MAIL_USERNAME ve MAIL_PASSWORD ayarlarını kontrol et."
+
         return redirect("/kod-dogrula")
 
     return render_template("register.html")
-
-
 
 
 @app.route("/kod-dogrula", methods=["GET", "POST"])

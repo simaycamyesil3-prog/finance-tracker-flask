@@ -1,6 +1,12 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 from database import veritabani_baglan, tablolari_olustur
 from datetime import datetime
+from functools import wraps
+
+from pdf_rapor import pdf_rapor_olustur
+from excel_rapor import excel_rapor_olustur
+from auth import sifre_hashle
+
 
 app = Flask(__name__)
 app.secret_key = "finans_takip_gizli_anahtar"
@@ -8,8 +14,13 @@ app.secret_key = "finans_takip_gizli_anahtar"
 tablolari_olustur()
 
 
-def giris_gerekli():
-    return "kullanici_id" in session
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "kullanici_id" not in session:
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route("/")
@@ -19,14 +30,12 @@ def ana_sayfa():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if giris_gerekli():
+    if "kullanici_id" in session:
         return redirect("/dashboard")
 
     if request.method == "POST":
         kullanici_adi = request.form["kullanici_adi"]
         sifre = request.form["sifre"]
-
-        from auth import sifre_hashle
         sifreli = sifre_hashle(sifre)
 
         baglanti = veritabani_baglan()
@@ -35,7 +44,8 @@ def login():
         imlec.execute("""
             SELECT id, ad_soyad
             FROM kullanicilar
-            WHERE (kullanici_adi = ? OR email = ?) AND (sifre = ? OR sifre = ?)
+            WHERE (kullanici_adi = ? OR email = ?)
+            AND (sifre = ? OR sifre = ?)
         """, (kullanici_adi, kullanici_adi, sifreli, sifre))
 
         kullanici = imlec.fetchone()
@@ -53,7 +63,7 @@ def login():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if giris_gerekli():
+    if "kullanici_id" in session:
         return redirect("/dashboard")
 
     if request.method == "POST":
@@ -61,10 +71,7 @@ def register():
         kullanici_adi = request.form["kullanici_adi"]
         email = request.form["email"]
         sifre = request.form["sifre"]
-
-        from auth import sifre_hashle
         sifreli = sifre_hashle(sifre)
-
         tarih = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         baglanti = veritabani_baglan()
@@ -78,13 +85,13 @@ def register():
             """, (ad_soyad, kullanici_adi, email, sifreli, tarih))
 
             baglanti.commit()
-            baglanti.close()
-
             return redirect("/login")
 
         except Exception as e:
-            baglanti.close()
             return f"Kayıt hatası: {e}"
+
+        finally:
+            baglanti.close()
 
     return render_template("register.html")
 
@@ -96,10 +103,8 @@ def logout():
 
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
-    if not giris_gerekli():
-        return redirect("/login")
-
     kullanici_id = session["kullanici_id"]
 
     baglanti = veritabani_baglan()
@@ -152,10 +157,8 @@ def dashboard():
 
 
 @app.route("/gelir-ekle", methods=["GET", "POST"])
+@login_required
 def web_gelir_ekle():
-    if not giris_gerekli():
-        return redirect("/login")
-
     if request.method == "POST":
         tutar = request.form["tutar"]
         kategori = request.form["kategori"]
@@ -180,10 +183,8 @@ def web_gelir_ekle():
 
 
 @app.route("/gider-ekle", methods=["GET", "POST"])
+@login_required
 def web_gider_ekle():
-    if not giris_gerekli():
-        return redirect("/login")
-
     if request.method == "POST":
         tutar = request.form["tutar"]
         kategori = request.form["kategori"]
@@ -208,10 +209,8 @@ def web_gider_ekle():
 
 
 @app.route("/raporlar")
+@login_required
 def web_raporlar():
-    if not giris_gerekli():
-        return redirect("/login")
-
     kullanici_id = session["kullanici_id"]
 
     baglanti = veritabani_baglan()
@@ -252,10 +251,8 @@ def web_raporlar():
 
 
 @app.route("/duzenle/<int:id>/<tur>", methods=["GET", "POST"])
+@login_required
 def duzenle(id, tur):
-    if not giris_gerekli():
-        return redirect("/login")
-
     kullanici_id = session["kullanici_id"]
     tablo = "gelirler" if tur == "Gelir" else "giderler"
 
@@ -291,17 +288,18 @@ def duzenle(id, tur):
 
 
 @app.route("/sil/<int:id>/<tur>")
+@login_required
 def sil(id, tur):
-    if not giris_gerekli():
-        return redirect("/login")
-
     kullanici_id = session["kullanici_id"]
     tablo = "gelirler" if tur == "Gelir" else "giderler"
 
     baglanti = veritabani_baglan()
     imlec = baglanti.cursor()
 
-    imlec.execute(f"DELETE FROM {tablo} WHERE id = ? AND kullanici_id = ?", (id, kullanici_id))
+    imlec.execute(
+        f"DELETE FROM {tablo} WHERE id = ? AND kullanici_id = ?",
+        (id, kullanici_id)
+    )
 
     baglanti.commit()
     baglanti.close()
@@ -310,10 +308,8 @@ def sil(id, tur):
 
 
 @app.route("/grafikler")
+@login_required
 def web_grafikler():
-    if not giris_gerekli():
-        return redirect("/login")
-
     kullanici_id = session["kullanici_id"]
 
     baglanti = veritabani_baglan()
@@ -330,28 +326,18 @@ def web_grafikler():
     return render_template("grafikler.html", gelir=gelir, gider=gider)
 
 
-from pdf_rapor import pdf_rapor_olustur
-
-
 @app.route("/pdf-indir")
+@login_required
 def pdf_indir():
-    if not giris_gerekli():
-        return redirect("/login")
-
     kullanici_id = session["kullanici_id"]
     dosya_adi = pdf_rapor_olustur(kullanici_id)
 
     return send_file(dosya_adi, as_attachment=True)
 
 
-from excel_rapor import excel_rapor_olustur
-
-
 @app.route("/excel-indir")
+@login_required
 def excel_indir():
-    if not giris_gerekli():
-        return redirect("/login")
-
     kullanici_id = session["kullanici_id"]
     dosya_adi = excel_rapor_olustur(kullanici_id)
 
@@ -360,4 +346,3 @@ def excel_indir():
 
 if __name__ == "__main__":
     app.run(debug=True)
-

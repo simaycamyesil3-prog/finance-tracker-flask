@@ -1,23 +1,11 @@
 import os
 import random
 import smtplib
-
-from flask_mail import Mail, Message
-
-
-mail = Mail()
+from email.mime.text import MIMEText
 
 
 def mail_ayarlari(app):
-    app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-    app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", 587))
-    app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "True") == "True"
-    app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
-    app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
-    app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
-    app.config["MAIL_TIMEOUT"] = 5
-
-    mail.init_app(app)
+    pass
 
 
 def kod_uret():
@@ -26,22 +14,25 @@ def kod_uret():
 
 def mail_gonder(alici, konu, icerik):
     try:
-        if not os.environ.get("MAIL_USERNAME") or not os.environ.get("MAIL_PASSWORD"):
+        mail_adresi = os.environ.get("MAIL_USERNAME")
+        mail_sifresi = os.environ.get("MAIL_PASSWORD")
+
+        if not mail_adresi or not mail_sifresi:
             print("MAIL_USERNAME veya MAIL_PASSWORD eksik.")
             return False
 
-        mesaj = Message(
-            subject=konu,
-            recipients=[alici],
-            body=icerik
-        )
+        mesaj = MIMEText(icerik, "plain", "utf-8")
+        mesaj["Subject"] = konu
+        mesaj["From"] = mail_adresi
+        mesaj["To"] = alici
 
-        mail.send(mesaj)
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
+        server.starttls()
+        server.login(mail_adresi, mail_sifresi)
+        server.sendmail(mail_adresi, [alici], mesaj.as_string())
+        server.quit()
+
         return True
-
-    except smtplib.SMTPAuthenticationError as e:
-        print("SMTP kimlik doğrulama hatası:", e)
-        return False
 
     except Exception as e:
         print("Mail gönderme hatası:", e)

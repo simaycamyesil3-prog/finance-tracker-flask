@@ -175,138 +175,207 @@
 {% endblock %}
 
 {% block extra_js %}
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-const gelir = {{ gelir }};
-const gider = {{ gider }};
+document.addEventListener("DOMContentLoaded", function () {
 
-new Chart(document.getElementById("aylikGrafik"), {
-    type: "line",
-    data: {
-        labels: ["Oca", "Şub", "Mar", "Nis", "May", "Haz"],
-        datasets: [
-            {
-                label: "Gelir",
-                data: [gelir * 0.50, gelir * 0.72, gelir * 0.61, gelir * 0.84, gelir * 0.68, gelir],
-                borderColor: "#22c55e",
-                backgroundColor: "rgba(34,197,94,0.12)",
-                fill: true,
-                tension: 0.4,
-                pointRadius: 5
+    const aylikEtiketler = {{ aylik_etiketler | tojson }};
+    const aylikGelirler = {{ aylik_gelirler | tojson }};
+    const aylikGiderler = {{ aylik_giderler | tojson }};
+
+    const kategoriEtiketleri = {{ kategori_etiketleri | tojson }};
+    const kategoriTutarlari = {{ kategori_tutarlari | tojson }};
+
+    const aylikGrafikElementi = document.getElementById("aylikGrafik");
+
+    if (aylikGrafikElementi) {
+        new Chart(aylikGrafikElementi, {
+            type: "line",
+            data: {
+                labels: aylikEtiketler,
+                datasets: [
+                    {
+                        label: "Gelir",
+                        data: aylikGelirler,
+                        borderColor: "#22c55e",
+                        backgroundColor: "rgba(34, 197, 94, 0.12)",
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    },
+                    {
+                        label: "Gider",
+                        data: aylikGiderler,
+                        borderColor: "#f43f5e",
+                        backgroundColor: "rgba(244, 63, 94, 0.12)",
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }
+                ]
             },
-            {
-                label: "Gider",
-                data: [gider * 0.55, gider * 0.76, gider * 0.58, gider * 0.92, gider * 0.70, gider],
-                borderColor: "#f43f5e",
-                backgroundColor: "rgba(244,63,94,0.12)",
-                fill: true,
-                tension: 0.4,
-                pointRadius: 5
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                animation: {
+                    duration: 1000,
+                    easing: "easeOutQuart"
+                },
+                plugins: {
+                    legend: {
+                        position: "top"
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label +
+                                    ": ₺" +
+                                    Number(context.raw).toLocaleString("tr-TR");
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return "₺" + Number(value).toLocaleString("tr-TR");
+                            }
+                        }
+                    }
+                }
             }
-        ]
-    },
-    options: {
-        responsive: true,
-        animation: {
-            duration: 1200,
-            easing: "easeOutQuart"
-        },
-        plugins: {
-            legend: {
-                position: "top"
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
+        });
     }
-});
 
-const kategoriLabels = {{ kategori_verileri | map(attribute=0) | list | tojson }};
-const kategoriData = {{ kategori_verileri | map(attribute=1) | list | tojson }};
+    const kategoriGrafikElementi =
+        document.getElementById("kategoriGrafik");
 
-new Chart(document.getElementById("kategoriGrafik"), {
-    type: "doughnut",
-    data: {
-        labels: kategoriLabels,
-        datasets: [{
-            data: kategoriData,
-            backgroundColor: ["#3b82f6", "#22c55e", "#f97316", "#8b5cf6", "#94a3b8", "#ef4444", "#14b8a6"],
-            borderWidth: 0
-        }]
-    },
-    options: {
-        responsive: true,
-        cutout: "65%",
-        animation: {
-            duration: 1200,
-            easing: "easeOutQuart"
-        },
-        plugins: {
-            legend: {
-                position: "right"
-            }
-        }
-    }
-});
-            backgroundColor: ["#3b82f6", "#22c55e", "#f97316", "#8b5cf6", "#94a3b8"],
-            borderWidth: 0
-        }]
-    },
-    options: {
-        responsive: true,
-        cutout: "65%",
-        animation: {
-            duration: 1200,
-            easing: "easeOutQuart"
-        },
-        plugins: {
-            legend: {
-                position: "right"
-            }
-        }
-    }
-});
+    if (kategoriGrafikElementi) {
+        const kategoriVarMi =
+            kategoriEtiketleri.length > 0 &&
+            kategoriTutarlari.some(tutar => Number(tutar) > 0);
 
-new Chart(document.getElementById("barGrafik"), {
-    type: "bar",
-    data: {
-        labels: ["Oca", "Şub", "Mar", "Nis", "May", "Haz"],
-        datasets: [
-            {
-                label: "Gelir",
-                data: [gelir * 0.50, gelir * 0.72, gelir * 0.61, gelir * 0.84, gelir * 0.68, gelir],
-                backgroundColor: "#22c55e",
-                borderRadius: 10
+        new Chart(kategoriGrafikElementi, {
+            type: "doughnut",
+            data: {
+                labels: kategoriVarMi
+                    ? kategoriEtiketleri
+                    : ["Henüz gider yok"],
+
+                datasets: [{
+                    data: kategoriVarMi
+                        ? kategoriTutarlari
+                        : [1],
+
+                    backgroundColor: kategoriVarMi
+                        ? [
+                            "#3b82f6",
+                            "#22c55e",
+                            "#f97316",
+                            "#8b5cf6",
+                            "#ef4444",
+                            "#14b8a6",
+                            "#eab308",
+                            "#ec4899"
+                        ]
+                        : ["#e2e8f0"],
+
+                    borderWidth: 0
+                }]
             },
-            {
-                label: "Gider",
-                data: [gider * 0.55, gider * 0.76, gider * 0.58, gider * 0.92, gider * 0.70, gider],
-                backgroundColor: "#f43f5e",
-                borderRadius: 10
+            options: {
+                responsive: true,
+                cutout: "65%",
+                animation: {
+                    duration: 1000,
+                    easing: "easeOutQuart"
+                },
+                plugins: {
+                    legend: {
+                        position: "right"
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                if (!kategoriVarMi) {
+                                    return "Henüz gider eklenmedi";
+                                }
+
+                                return context.label +
+                                    ": ₺" +
+                                    Number(context.raw).toLocaleString("tr-TR");
+                            }
+                        }
+                    }
+                }
             }
-        ]
-    },
-    options: {
-        responsive: true,
-        animation: {
-            duration: 1200,
-            easing: "easeOutQuart"
-        },
-        plugins: {
-            legend: {
-                position: "top"
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
+        });
     }
+
+    const barGrafikElementi = document.getElementById("barGrafik");
+
+    if (barGrafikElementi) {
+        new Chart(barGrafikElementi, {
+            type: "bar",
+            data: {
+                labels: aylikEtiketler,
+                datasets: [
+                    {
+                        label: "Gelir",
+                        data: aylikGelirler,
+                        backgroundColor: "#22c55e",
+                        borderRadius: 8
+                    },
+                    {
+                        label: "Gider",
+                        data: aylikGiderler,
+                        backgroundColor: "#f43f5e",
+                        borderRadius: 8
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                animation: {
+                    duration: 1000,
+                    easing: "easeOutQuart"
+                },
+                plugins: {
+                    legend: {
+                        position: "top"
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label +
+                                    ": ₺" +
+                                    Number(context.raw).toLocaleString("tr-TR");
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return "₺" + Number(value).toLocaleString("tr-TR");
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
 });
 </script>
+
 {% endblock %}

@@ -291,22 +291,31 @@ def dashboard():
     baglanti = veritabani_baglan()
     imlec = baglanti.cursor()
 
-    imlec.execute("SELECT SUM(tutar) FROM gelirler WHERE kullanici_id = ?", (kullanici_id,))
+    # Toplam gelir
+    imlec.execute(
+        "SELECT SUM(tutar) FROM gelirler WHERE kullanici_id = ?",
+        (kullanici_id,)
+    )
     toplam_gelir = imlec.fetchone()[0] or 0
 
-    imlec.execute("SELECT SUM(tutar) FROM giderler WHERE kullanici_id = ?", (kullanici_id,))
+    # Toplam gider
+    imlec.execute(
+        "SELECT SUM(tutar) FROM giderler WHERE kullanici_id = ?",
+        (kullanici_id,)
+    )
     toplam_gider = imlec.fetchone()[0] or 0
 
     bakiye = toplam_gelir - toplam_gider
 
+    # Son 5 işlem
     imlec.execute("""
-        SELECT 'Gelir' as tur, tutar, kategori, aciklama, tarih
+        SELECT 'Gelir' AS tur, tutar, kategori, aciklama, tarih
         FROM gelirler
         WHERE kullanici_id = ?
 
         UNION ALL
 
-        SELECT 'Gider' as tur, tutar, kategori, aciklama, tarih
+        SELECT 'Gider' AS tur, tutar, kategori, aciklama, tarih
         FROM giderler
         WHERE kullanici_id = ?
 
@@ -316,14 +325,66 @@ def dashboard():
 
     son_islemler = imlec.fetchall()
 
+    # Gider kategorileri
     imlec.execute("""
         SELECT kategori, SUM(tutar)
         FROM giderler
         WHERE kullanici_id = ?
         GROUP BY kategori
+        ORDER BY SUM(tutar) DESC
     """, (kullanici_id,))
 
     kategori_verileri = imlec.fetchall()
+
+    kategori_etiketleri = [satir[0] for satir in kategori_verileri]
+    kategori_tutarlari = [float(satir[1]) for satir in kategori_verileri]
+
+    # Son 6 ayı oluştur
+    ay_isimleri = [
+        "Oca", "Şub", "Mar", "Nis", "May", "Haz",
+        "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"
+    ]
+
+    simdi = datetime.now()
+    son_alti_ay = []
+
+    for geriye in range(5, -1, -1):
+        toplam_ay = simdi.year * 12 + simdi.month - 1 - geriye
+        yil = toplam_ay // 12
+        ay = toplam_ay % 12 + 1
+
+        son_alti_ay.append({
+            "anahtar": f"{yil}-{ay:02d}",
+            "etiket": f"{ay_isimleri[ay - 1]} {str(yil)[-2:]}"
+        })
+
+    aylik_etiketler = [ay["etiket"] for ay in son_alti_ay]
+    aylik_gelirler = []
+    aylik_giderler = []
+
+    for ay in son_alti_ay:
+        ay_anahtari = ay["anahtar"]
+
+        imlec.execute("""
+            SELECT SUM(tutar)
+            FROM gelirler
+            WHERE kullanici_id = ?
+            AND substr(tarih, 1, 7) = ?
+        """, (kullanici_id, ay_anahtari))
+
+        ay_geliri = imlec.fetchone()[0] or 0
+        aylik_gelirler.append(float(ay_geliri))
+
+        imlec.execute("""
+            SELECT SUM(tutar)
+            FROM giderler
+            WHERE kullanici_id = ?
+            AND substr(tarih, 1, 7) = ?
+        """, (kullanici_id, ay_anahtari))
+
+        ay_gideri = imlec.fetchone()[0] or 0
+        aylik_giderler.append(float(ay_gideri))
+
     baglanti.close()
 
     return render_template(
@@ -333,9 +394,12 @@ def dashboard():
         bakiye=bakiye,
         ad_soyad=session["ad_soyad"],
         son_islemler=son_islemler,
-        kategori_verileri=kategori_verileri
+        kategori_etiketleri=kategori_etiketleri,
+        kategori_tutarlari=kategori_tutarlari,
+        aylik_etiketler=aylik_etiketler,
+        aylik_gelirler=aylik_gelirler,
+        aylik_giderler=aylik_giderler
     )
-
 
 @app.route("/gelir-ekle", methods=["GET", "POST"])
 @login_required
